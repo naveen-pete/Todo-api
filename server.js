@@ -1,5 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var _ = require('underscore');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -18,7 +19,7 @@ app.get('/todos', function (req, res) {
 
 app.get('/todos/:id', function (req, res) {
 	var todoId = parseInt(req.params.id);
-	var matchedTodo = getTodo(todoId);
+	var matchedTodo = _.findWhere(todos, {id: todoId});
 	if(matchedTodo) {
 		res.json(matchedTodo);
 	} else {
@@ -27,27 +28,22 @@ app.get('/todos/:id', function (req, res) {
 });
 
 app.post('/todos', function (req, res) {
-	var newTodo = req.body;
+	var newTodo = _.pick(req.body, 'description', 'completed');
 
-	newTodo.id = todoNextId;
+	if(!_.isBoolean(newTodo.completed) || 
+		!_.isString(newTodo.description) || 
+		newTodo.description.trim().length <= 0) {
+		return res.status(400).send();
+	}
+
+	newTodo.description = newTodo.description.trim();
+	newTodo.id = todoNextId++;
+
 	todos.push(newTodo);
 
-	todoNextId++;
 	res.json(newTodo);
 });
 
 app.listen(PORT, function () {
 	console.log('Express server started and listening on port ' + PORT + '!');
 });
-
-function getTodo(todoId) {
-	var matchedTodo;
-	var i = 0;
-	while (!matchedTodo && i < todos.length) {
-		if(todos[i].id === todoId) {
-			matchedTodo = todos[i];
-		}
-		i++;
-	}
-	return matchedTodo;
-}
