@@ -36,7 +36,7 @@ app.get('/todos', function(req, res) {
 		res.json(todos);
 	}).catch(function(e) {
 		res.status(500).json({
-			"message": "Error occurred."
+			"error": "Error occurred."
 		});
 	});
 });
@@ -49,12 +49,12 @@ app.get('/todos/:id', function(req, res) {
 			res.json(todo.toJSON());
 		} else {
 			res.status(404).json({
-				"message": "No todo found for id " + todoId
+				"error": "No todo found for id '" + todoId + "'"
 			});
 		}
 	}).catch(function(e) {
 		res.status(500).json({
-			"message": "Error occurred."
+			"error": "Error occurred."
 		});
 	});
 });
@@ -71,17 +71,26 @@ app.post('/todos', function(req, res) {
 
 app.delete('/todos/:id', function(req, res) {
 	var todoId = parseInt(req.params.id);
-	var matchedTodo = _.findWhere(todos, {
-		id: todoId
-	});
-	if (matchedTodo) {
-		todos = _.without(todos, matchedTodo);
-		res.json(matchedTodo);
-	} else {
-		res.status(404).json({
-			error: 'Requested todo item not found.'
+
+	db.todo.destroy({
+		where: {
+			id: todoId
+		}
+	}).then(function(rowsDeleted) {
+		if (rowsDeleted === 0) {
+			res.status(404).json({
+				"error": "No todo found for id '" + todoId + "'"
+			});
+		} else {
+			res.json({
+				"message": "Todo deleted successfully."
+			});
+		}
+	}).catch(function(e) {
+		res.status(500).json({
+			"error": "Error occurred."
 		});
-	}
+	});
 });
 
 app.put('/todos/:id', function(req, res) {
