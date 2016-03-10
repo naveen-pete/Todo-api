@@ -14,6 +14,16 @@ app.get('/', function(req, res) {
 	res.send('Todo API Root');
 });
 
+app.post('/todos', function(req, res) {
+	var newTodo = _.pick(req.body, 'description', 'completed');
+
+	db.todo.create(newTodo).then(function(todo) {
+		res.json(todo.toJSON());
+	}).catch(function(e) {
+		res.status(400).json(e);
+	});
+});
+
 app.get('/todos', function(req, res) {
 	var query = req.query;
 	var where = {};
@@ -56,16 +66,6 @@ app.get('/todos/:id', function(req, res) {
 		res.status(500).json({
 			"error": "Error occurred."
 		});
-	});
-});
-
-app.post('/todos', function(req, res) {
-	var newTodo = _.pick(req.body, 'description', 'completed');
-
-	db.todo.create(newTodo).then(function(todo) {
-		res.json(todo.toJSON());
-	}).catch(function(e) {
-		res.status(400).json(e);
 	});
 });
 
@@ -124,6 +124,16 @@ app.put('/todos/:id', function(req, res) {
 		res.status(500).json({
 			"error": "Error occurred."
 		});
+	});
+});
+
+app.post('/users', function (req, res) {
+	var newUser = _.pick(req.body, 'email', 'password');
+
+	db.user.create(newUser).then(function(user) {
+		res.json(user.toJSON());
+	}).catch(function(e) {
+		res.status(400).json(e);
 	});
 });
 
