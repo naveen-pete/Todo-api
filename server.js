@@ -63,7 +63,7 @@ app.get('/todos/:id', middleware.requireAuthentication, function(req, res) {
 	var todoId = parseInt(req.params.id);
 
 	db.todo.findOne({
-		where: { 
+		where: {
 			id: todoId,
 			userId: req.user.id
 		}
@@ -158,12 +158,18 @@ app.post('/users', function(req, res) {
 
 app.post('/users/login', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
+	var userInstance;
 
 	db.user.authenticate(body).then(function(user) {
 		var token = user.generateToken('authentication');
+		userInstance = user;
 
-		if (token) {
-			res.header('Auth', token).json(user.toPublicJSON());
+		return db.token.create({
+			token: token
+		});
+	}).then(function(tokenInstance) {
+		if (tokenInstance) {
+			res.header('Auth', tokenInstance.token).json(userInstance.toPublicJSON());
 		} else {
 			res.status(401).json({
 				error: 'Error occurred.'
@@ -171,6 +177,24 @@ app.post('/users/login', function(req, res) {
 		}
 	}).catch(function(e) {
 		res.status(401).json(e);
+	});
+});
+
+app.delete('/users/login', middleware.requireAuthentication, function(req, res) {
+	req.token.destroy().then(function(rowsDeleted) {
+		if (rowsDeleted === 0) {
+			res.status(404).json({
+				"error": "No token found"
+			});
+		} else {
+			res.json({
+				message: 'Logout successful.'
+			});
+		}
+	}).catch(function() {
+		res.status(500).json({
+			"error": "Error occurred."
+		});
 	});
 });
 
